@@ -47,6 +47,73 @@ function ScoreGauge({ label, value, percent }) {
   )
 }
 
+function AuditMatrix({ trail }) {
+  const [open, setOpen] = React.useState(false);
+  if (!trail || trail.length === 0) return null;
+  
+  return (
+    <div className="mt-5 border border-gray-200 rounded-lg overflow-hidden">
+      <button 
+        onClick={() => setOpen(!open)}
+        className="w-full px-4 py-3 flex justify-between items-center bg-gray-50 hover:bg-gray-100 transition-colors"
+      >
+        <div className="font-semibold text-sm flex items-center gap-2 text-[#1A56A0]">
+          <span>🔍 Inspect Processing Matrix (Audit Trail)</span>
+        </div>
+        <span className="text-gray-500 text-xs bg-white px-2 py-1 rounded shadow-sm border">{open ? 'Collapse Pipeline' : 'Expand Pipeline'}</span>
+      </button>
+      
+      {open && (
+        <div className="p-4 bg-white space-y-2">
+          {trail.map((step, idx) => (
+            <div key={idx} className="flex gap-4 relative">
+              {idx !== trail.length - 1 && <div className="absolute left-[11px] top-6 bottom-[-16px] w-[2px] bg-blue-100"></div>}
+              <div className="relative z-10 w-6 h-6 rounded-full bg-blue-50 border-2 border-[#1A56A0] flex items-center justify-center flex-shrink-0 mt-0.5">
+                <div className="w-2 h-2 bg-[#1A56A0] rounded-full"></div>
+              </div>
+              <div className="pb-3">
+                <div className="flex items-center gap-3">
+                  <span className="font-semibold text-sm text-gray-800">{step.step}</span>
+                  <span className="px-2 py-0.5 rounded bg-blue-50 text-[#1A56A0] text-xs font-mono font-bold border border-blue-200">{step.value}</span>
+                </div>
+                <div className="text-xs text-gray-600 mt-1">{step.description}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function CareerPathways({ pathways }) {
+  if (!pathways || pathways.length === 0) return null;
+  
+  return (
+    <div className="mt-4 bg-amber-50/50 border border-amber-200 rounded-lg p-4 shadow-sm">
+      <div className="flex items-center gap-2 mb-3">
+        <span className="text-amber-700 font-bold text-sm tracking-wide uppercase flex items-center gap-2">
+          <span>📈</span> Deterministic Career Pathway
+        </span>
+      </div>
+      <div className="space-y-3">
+        {pathways.map((path, idx) => (
+          <div key={idx} className="bg-white p-3 rounded shadow-sm border border-amber-100">
+            <div className="flex justify-between items-start mb-1.5">
+              <span className="font-bold text-sm text-gray-900">{path.employee}</span>
+              <span className="text-[10px] uppercase font-bold tracking-wider bg-red-100 text-red-700 px-2 py-0.5 rounded border border-red-200">Coaching Required</span>
+            </div>
+            <div className="text-xs text-red-600 mb-2 font-medium bg-red-50 inline-block px-2 py-1 rounded">{path.diagnosis}</div>
+            <div className="text-sm font-medium text-amber-800 bg-amber-50 p-2.5 rounded border border-amber-200/50">
+              💡 {path.deterministic_path}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function ComposeView() {
   const [selectedProjectId, setSelectedProjectId] = useState(null)
   const [running, setRunning] = useState(false)
@@ -146,8 +213,12 @@ export default function ComposeView() {
                       <ul className="list-disc list-inside text-sm text-gray-700">
                         {r.explanation && Object.values(r.explanation).map((line, idx) => (<li key={idx}>{line}</li>))}
                       </ul>
+                      
+                      <CareerPathways pathways={r.career_pathways} />
+                      <AuditMatrix trail={r.audit_trail} />
+                      
                       {r.math_receipt && (
-                        <div className="mt-3 p-3 bg-gray-50 border border-gray-300 rounded font-mono text-xs">
+                        <div className="mt-3 p-3 bg-gray-50 border border-gray-300 rounded font-mono text-xs text-gray-500 truncate" title={r.math_receipt}>
                           {r.math_receipt}
                         </div>
                       )}

@@ -20,7 +20,7 @@ def audit_team(team: List[CandidateProfile], project: ProjectProfile, all_candid
     pairs_found = ig.get_inhibition_pairs(team, inhibition_graph)
     
     id_to_name = {c.id: c.name for c in all_candidates}
-    named_pairs = [(id_to_name.get(p[0], p[0]), id_to_name.get(p[1], p[1])) for p in pairs_found]
+    named_pairs = [(id_to_name.get(p[0], p[0]), id_to_name.get(p[1], p[1]), float(p[2])) for p in pairs_found]
     
     drag = ig.get_drag_coefficient(pairs_found)
     if project.reaction_type == 'chain': drag *= 1.5

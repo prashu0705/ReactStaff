@@ -38,6 +38,8 @@ class TeamCompositionResult(BaseModel):
     composite_score: float
     explanation: Dict[str, str]
     math_receipt: str
+    audit_trail: List[Dict[str, Any]] = []
+    career_pathways: List[Dict[str, str]] = []
 
 class AuditReport(BaseModel):
     team: List[CandidateProfile]

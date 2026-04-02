@@ -73,39 +73,53 @@ def score_team(team: List[CandidateProfile], project: ProjectProfile, inhibition
     bottleneck = max(team, key=lambda c: c.activation_energy) if team else None
     catalyst = max(team, key=lambda c: c.catalytic_rating) if team else None
 
-    # Calculate salience (importance score) for sorting the insights
-    insights = []
+    audit_trail = [
+        {"step": "Catalytic Initialization", "value": f"A={A:.2f}", "description": f"Base group catalytic multiplier evaluated" + (f" with a boost off {catalyst.name}" if catalyst and catalyst.catalytic_rating > 0.8 else "")},
+        {"step": "Activation Energy Drag", "value": f"Ea={Ea:.2f}", "description": f"Averaged metabolic drag across all members" + (f", burdened heavily by {bottleneck.name}" if bottleneck and bottleneck.activation_energy > 5 else "")},
+        {"step": "Role Complementarity", "value": f"R={R:.2f}", "description": f"Verified coverage of required project sequences: {', '.join(project.required_roles)}"},
+        {"step": "Temperature Factor", "value": f"T={T:.1f}", "description": "Applied core project thermal multiplier."},
+        {"step": "Arrhenius Transformation", "value": f"Rate={rate:.3f}", "description": "Passed coefficients through sigmoid activation limit."},
+        {"step": "Network Friction Analysis", "value": f"Yield={yield_sc:.3f}", "description": f"Reduced structural yield ceiling ({project.yield_requirement}) by calculated graph pair conflicts."}
+    ]
     
-    if catalyst and catalyst.catalytic_rating > 0.75:
-        rate_exp = f"⚡ Fast Kickoff: Reaction rate accelerates exceptionally fast driven by {catalyst.name}'s catalytic abilities (Rating: {catalyst.catalytic_rating})."
-        insights.append({"key": "reaction_rate", "text": rate_exp, "priority": 8})
-    else:
-        rate_exp = f"📉 Slower Initiation: System is dragging on high activation energy required by {bottleneck.name if bottleneck else 'the team'}."
-        insights.append({"key": "reaction_rate", "text": rate_exp, "priority": 4})
-
-    if pairs:
+    career_pathways = []
+    # Identify limiting metric to assign growth trajectory
+    metrics = {
+        "Kinetic Reaction Rate": rate,
+        "Structural Yield": yield_sc,
+        "Thermal Stability": stability,
+        "Role Coverage": R
+    }
+    worst_metric_name = sorted(metrics.items(), key=lambda x: x[1])[0][0]
+    
+    if worst_metric_name == "Thermal Stability":
+        weakest = min(team, key=lambda c: c.thermal_stability) if team else None
+        strongest = max(team, key=lambda c: c.thermal_stability) if team else None
+        if weakest:
+            mentorship = f" under {strongest.name}" if strongest and strongest.id != weakest.id else ""
+            career_pathways.append({
+                "employee": weakest.name,
+                "diagnosis": f"Critical Structural Frailty (Stability: {weakest.thermal_stability})",
+                "deterministic_path": f"Assign to an extensive peer-mentorship track{mentorship} to build operational latency tolerance."
+            })
+    elif worst_metric_name == "Kinetic Reaction Rate" and bottleneck:
+        career_pathways.append({
+            "employee": bottleneck.name,
+            "diagnosis": f"High Systemic Activation Requirement (Ea: {bottleneck.activation_energy})",
+            "deterministic_path": f"Enroll in rapid-kickoff acceleration courses to reduce drag before next major deployment cycle."
+        })
+    elif worst_metric_name == "Structural Yield" and pairs:
         heaviest_pair = max(pairs, key=lambda p: p[2])
-        n1 = next((c.name for c in team if c.id == heaviest_pair[0]), heaviest_pair[0])
-        n2 = next((c.name for c in team if c.id == heaviest_pair[1]), heaviest_pair[1])
-        yield_exp = f"⚠️ Yield Drag: Yield drops to {yield_sc:.2f} due to frictional drag (Severity {heaviest_pair[2]:.1f}) primarily between {n1} and {n2}."
-        insights.append({"key": "yield_score", "text": yield_exp, "priority": 10}) # Friction is always highly critical to mention first
-    else:
-        yield_exp = f"🛡️ Perfect Harmony: Yield achieves {yield_sc:.2f} strictly because there is ZERO collaboration friction in this graph."
-        insights.append({"key": "yield_score", "text": yield_exp, "priority": 9})
-
-    if stability > 0.75:
-        stab_exp = f"🧱 Structural Resilience: Highly resilient to deadline pressure (Stability Score: {stability:.2f})."
-        insights.append({"key": "stability_score", "text": stab_exp, "priority": 6})
-    else:
-        stab_exp = f"🧊 Fragile State: Team is chemically unstable and structurally vulnerable (Stability: {stability:.2f})."
-        insights.append({"key": "stability_score", "text": stab_exp, "priority": 9})
-        
-    insights.append({"key": "composite_score", "text": "🎯 Overall: Top-tier mathematically verified composition for the given project parameters.", "priority": 1})
-        
-    # Sort insights so the most aggressive/critical points surface to the very top in the UI
-    insights.sort(key=lambda x: x["priority"], reverse=True)
+        n1 = next((c for c in team if c.id == heaviest_pair[0]), None)
+        n2 = next((c for c in team if c.id == heaviest_pair[1]), None)
+        if n1 and n2:
+            career_pathways.append({
+                "employee": f"{n1.name} & {n2.name}",
+                "diagnosis": f"Relational Graph Friction (Severity: {heaviest_pair[2]:.1f})",
+                "deterministic_path": f"Mandatory cross-functional mediation to resolve bottlenecked yield dynamics between these specific nodes."
+            })
     
-    explanations = {item["key"]: item["text"] for item in insights}
+    explanations = {}
     
     return TeamCompositionResult(
         team=team,
@@ -114,5 +128,7 @@ def score_team(team: List[CandidateProfile], project: ProjectProfile, inhibition
         stability_score=stability,
         composite_score=composite,
         explanation=explanations,
-        math_receipt=receipt
+        math_receipt=receipt,
+        audit_trail=audit_trail,
+        career_pathways=career_pathways
     )
