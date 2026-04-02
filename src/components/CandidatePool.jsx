@@ -71,6 +71,7 @@ export default function CandidatePool() {
   async function handleAdd(e) {
     e.preventDefault()
     const payload = {
+      id: 'c' + Date.now().toString().slice(-6),
       name: form.name,
       role_type: form.role_type,
       activation_energy: Number(form.activation_energy),
@@ -78,7 +79,7 @@ export default function CandidatePool() {
       thermal_stability: Number(form.thermal_stability),
       role_valency: Number(form.role_valency),
       inhibition_pairs: form.inhibition_pairs
-        ? form.inhibition_pairs.split(',').map(s => s.trim()).filter(Boolean)
+        ? form.inhibition_pairs.split(',').map(s => s.trim()).filter(Boolean).map(id => ({ id, severity: 1.0 }))
         : []
     }
 

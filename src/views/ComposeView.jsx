@@ -138,14 +138,19 @@ export default function ComposeView() {
                     </div>
 
                     <div className="mt-3">
-                      <ReactionDiagram team={r.members || []} project={null} />
+                      <ReactionDiagram team={r.team || []} project={null} />
                     </div>
 
                     <div className="mt-4">
                       <div className="font-semibold mb-2">Why This Team?</div>
                       <ul className="list-disc list-inside text-sm text-gray-700">
-                        {Array.isArray(r.explanation) ? r.explanation.map((line, idx) => (<li key={idx}>{line}</li>)) : (<li>{String(r.explanation)}</li>)}
+                        {r.explanation && Object.values(r.explanation).map((line, idx) => (<li key={idx}>{line}</li>))}
                       </ul>
+                      {r.math_receipt && (
+                        <div className="mt-3 p-3 bg-gray-50 border border-gray-300 rounded font-mono text-xs">
+                          {r.math_receipt}
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}

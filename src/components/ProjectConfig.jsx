@@ -56,10 +56,13 @@ export default function ProjectConfig({ selectedProjectId, onSelectProject }) {
   async function handleAdd(e) {
     e.preventDefault()
     const payload = {
+      id: 'p' + Date.now().toString().slice(-6),
       name: form.name,
       temperature: Number(form.temperature),
-      yield_requirement: Number(form.yield_requirement),
-      reaction_type: form.reaction_type
+      yield_requirement: Number(form.yield_requirement) / 100, // Map 0-100 UI to 0-1 schema
+      reaction_type: form.reaction_type,
+      required_roles: ["engineer", "designer"], // Defaults because they exist in backend schema
+      team_size: 4
     }
 
     try {

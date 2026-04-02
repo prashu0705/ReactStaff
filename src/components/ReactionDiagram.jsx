@@ -21,7 +21,7 @@ export default function ReactionDiagram({ team = [], project = null }) {
     if (!ai || !bi) return false
     const aPairs = a.inhibition_pairs || []
     const bPairs = b.inhibition_pairs || []
-    return aPairs.includes(bi) || bPairs.includes(ai)
+    return aPairs.some(p => p.id === bi || p === bi) || bPairs.some(p => p.id === ai || p === ai)
   }
 
   // find catalyst (highest catalytic_rating) and bottleneck (highest activation_energy)

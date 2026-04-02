@@ -144,21 +144,26 @@ export default function AuditView() {
                 <div className="p-4 bg-white rounded shadow">
                   <div className="font-semibold mb-2">Inhibition Report</div>
                   <div className="space-y-2">
-                    {report.inhibition_pairs_found.map((p, idx) => (
-                      <div key={idx} className="p-3 bg-red-50 border border-red-200 rounded">
-                        <div className="font-medium">{p.a_name} ↔ {p.b_name}</div>
-                        <div className="text-sm">Known friction pair. Yield drag: {p.yield_drag ?? p.drag ?? '—'}</div>
-                      </div>
-                    ))}
+                    {report.inhibition_pairs_found.map((p, idx) => {
+                      const nameA = Array.isArray(p) ? p[0] : p.a_name;
+                      const nameB = Array.isArray(p) ? p[1] : p.b_name;
+                      const drag = Array.isArray(p) ? p[2] : (p.yield_drag ?? p.drag);
+                      return (
+                        <div key={idx} className="p-3 bg-red-50 border border-red-200 rounded">
+                          <div className="font-medium">{nameA} ↔ {nameB}</div>
+                          <div className="text-sm">Known friction pair. Yield drag severity: {drag ?? '—'}</div>
+                        </div>
+                      )
+                    })}
                   </div>
                 </div>
               )}
 
               {/* Swap Recommendation */}
-              {report.swap_recommendation && (
+              {report.swap_recommendation && report.swap_recommendation.remove && (
                 <div className="p-4 bg-blue-50 border-l-4 border-blue-500 rounded">
                   <div className="font-semibold">Swap Recommendation</div>
-                  <div className="text-sm">Recommended Swap: Remove {report.swap_recommendation.remove_name} , Add {report.swap_recommendation.add_name}. Score improvement: +{report.swap_recommendation.delta ?? report.swap_recommendation.score_delta}. Reason: {report.swap_recommendation.reason}</div>
+                  <div className="text-sm">Recommended Swap: Remove {report.swap_recommendation.remove} , Add {report.swap_recommendation.add}. Score improvement: +{(report.swap_recommendation.score_delta ?? report.swap_recommendation.delta).toFixed(3)}. Reason: {report.swap_recommendation.reason}</div>
                 </div>
               )}
             </div>
