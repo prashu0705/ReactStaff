@@ -1,5 +1,9 @@
 from pydantic import BaseModel
-from typing import List, Dict, Any, Tuple
+from typing import List, Dict, Any, Tuple, Optional
+
+class InhibitionPair(BaseModel):
+    id: str
+    severity: float
 
 class CandidateProfile(BaseModel):
     id: str
@@ -9,7 +13,10 @@ class CandidateProfile(BaseModel):
     catalytic_rating: float
     role_valency: int
     thermal_stability: float
-    inhibition_pairs: List[str]
+    inhibition_pairs: List[InhibitionPair]
+    
+    class Config:
+        orm_mode = True
 
 class ProjectProfile(BaseModel):
     id: str
@@ -20,6 +27,9 @@ class ProjectProfile(BaseModel):
     required_roles: List[str]
     team_size: int
 
+    class Config:
+        orm_mode = True
+
 class TeamCompositionResult(BaseModel):
     team: List[CandidateProfile]
     reaction_rate: float
@@ -27,6 +37,7 @@ class TeamCompositionResult(BaseModel):
     stability_score: float
     composite_score: float
     explanation: Dict[str, str]
+    math_receipt: str
 
 class AuditReport(BaseModel):
     team: List[CandidateProfile]
@@ -34,6 +45,6 @@ class AuditReport(BaseModel):
     theoretical_maximum: float
     efficiency_gap: float
     bottleneck_person: str
-    inhibition_pairs_found: List[Tuple[str, str]]
+    inhibition_pairs_found: List[Tuple[str, str, float]]
     drag_coefficient: float
     swap_recommendation: Dict[str, Any]

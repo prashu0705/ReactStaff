@@ -1,13 +1,15 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List
+from sqlalchemy.orm import Session
 
-from models import CandidateProfile, ProjectProfile, TeamCompositionResult, AuditReport
-from seed_data import get_seed_candidates, get_seed_projects
+from models import CandidateProfile, ProjectProfile, TeamCompositionResult, AuditReport, InhibitionPair
+from database import SessionLocal, DbCandidate, DbProject
 import inhibition_graph as ig
 import optimizer
 import audit_engine
+from seed_data import seed_db_if_empty
 
 app = FastAPI(title="ReactStaff Intelligence Engine")
 
@@ -19,31 +21,35 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# In-memory storage
-candidates_db = {}
-projects_db = {}
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
 
-graph_cache = None
+def parse_candidate(db_c: DbCandidate) -> CandidateProfile:
+    pairs = [InhibitionPair(**p) for p in db_c.inhibition_pairs] if db_c.inhibition_pairs else []
+    return CandidateProfile(
+        id=db_c.id, name=db_c.name, role_type=db_c.role_type,
+        activation_energy=db_c.activation_energy, catalytic_rating=db_c.catalytic_rating,
+        role_valency=db_c.role_valency, thermal_stability=db_c.thermal_stability,
+        inhibition_pairs=pairs
+    )
 
-def get_graph():
-    global graph_cache
-    if not graph_cache:
-        graph_cache = ig.build_inhibition_graph(list(candidates_db.values()))
-    return graph_cache
-
-def rebuild_graph():
-    global graph_cache
-    graph_cache = ig.build_inhibition_graph(list(candidates_db.values()))
+def parse_project(db_p: DbProject) -> ProjectProfile:
+    return ProjectProfile(
+        id=db_p.id, name=db_p.name, temperature=db_p.temperature,
+        yield_requirement=db_p.yield_requirement, reaction_type=db_p.reaction_type,
+        required_roles=db_p.required_roles or [], team_size=db_p.team_size
+    )
 
 @app.on_event("startup")
-async def startup_event():
-    for c in get_seed_candidates():
-        candidates_db[c.id] = c
-    for p in get_seed_projects():
-        projects_db[p.id] = p
-    rebuild_graph()
+def startup_event():
+    db = SessionLocal()
+    seed_db_if_empty(db)
+    db.close()
 
-# Models for request bodies
 class ComposeRequest(BaseModel):
     project_id: str
 
@@ -51,53 +57,71 @@ class AuditRequest(BaseModel):
     project_id: str
     team_ids: List[str]
 
-@app.post("/candidates")
-def add_candidate(candidate: CandidateProfile):
-    candidates_db[candidate.id] = candidate
-    rebuild_graph()
-    return {"status": "success", "candidate": candidate}
+@app.post("/candidates", response_model=CandidateProfile)
+def add_candidate(candidate: CandidateProfile, db: Session = Depends(get_db)):
+    db_c = DbCandidate(
+        id=candidate.id, name=candidate.name, role_type=candidate.role_type,
+        activation_energy=candidate.activation_energy, catalytic_rating=candidate.catalytic_rating,
+        role_valency=candidate.role_valency, thermal_stability=candidate.thermal_stability,
+        inhibition_pairs=[p.dict() for p in candidate.inhibition_pairs]
+    )
+    db.add(db_c)
+    db.commit()
+    return candidate
 
 @app.get("/candidates", response_model=List[CandidateProfile])
-def get_candidates():
-    return list(candidates_db.values())
+def get_candidates(db: Session = Depends(get_db)):
+    return [parse_candidate(c) for c in db.query(DbCandidate).all()]
 
 @app.delete("/candidates/{c_id}")
-def delete_candidate(c_id: str):
-    if c_id in candidates_db:
-        del candidates_db[c_id]
-        rebuild_graph()
+def delete_candidate(c_id: str, db: Session = Depends(get_db)):
+    db_c = db.query(DbCandidate).filter(DbCandidate.id == c_id).first()
+    if db_c:
+        db.delete(db_c)
+        db.commit()
         return {"status": "deleted"}
     raise HTTPException(status_code=404, detail="Candidate not found")
 
-@app.post("/projects")
-def add_project(project: ProjectProfile):
-    projects_db[project.id] = project
-    return {"status": "success", "project": project}
+@app.post("/projects", response_model=ProjectProfile)
+def add_project(project: ProjectProfile, db: Session = Depends(get_db)):
+    db_p = DbProject(
+        id=project.id, name=project.name, temperature=project.temperature,
+        yield_requirement=project.yield_requirement, reaction_type=project.reaction_type,
+        required_roles=project.required_roles, team_size=project.team_size
+    )
+    db.add(db_p)
+    db.commit()
+    return project
 
 @app.get("/projects", response_model=List[ProjectProfile])
-def get_projects():
-    return list(projects_db.values())
+def get_projects(db: Session = Depends(get_db)):
+    return [parse_project(p) for p in db.query(DbProject).all()]
 
 @app.post("/compose", response_model=List[TeamCompositionResult])
-def compose_team(request: ComposeRequest):
-    if request.project_id not in projects_db:
-        raise HTTPException(status_code=404, detail="Project not found")
-        
-    project = projects_db[request.project_id]
-    all_candidates = list(candidates_db.values())
-    top_teams = optimizer.find_top_teams(all_candidates, project, get_graph(), top_n=3)
-    return top_teams
+def compose_team(request: ComposeRequest, db: Session = Depends(get_db)):
+    db_p = db.query(DbProject).filter(DbProject.id == request.project_id).first()
+    if not db_p: raise HTTPException(status_code=404, detail="Project not found")
+    
+    project = parse_project(db_p)
+    all_candidates = [parse_candidate(c) for c in db.query(DbCandidate).all()]
+    graph = ig.build_inhibition_graph(all_candidates)
+    
+    return optimizer.find_top_teams(all_candidates, project, graph, top_n=3)
 
 @app.post("/audit", response_model=AuditReport)
-def audit(request: AuditRequest):
-    if request.project_id not in projects_db:
-        raise HTTPException(status_code=404, detail="Project not found")
-        
-    project = projects_db[request.project_id]
-    team = [candidates_db[c_id] for c_id in request.team_ids if c_id in candidates_db]
+def audit(request: AuditRequest, db: Session = Depends(get_db)):
+    db_p = db.query(DbProject).filter(DbProject.id == request.project_id).first()
+    if not db_p: raise HTTPException(status_code=404, detail="Project not found")
+    project = parse_project(db_p)
     
-    if len(team) != len(request.team_ids):
-        raise HTTPException(status_code=400, detail="Some team members not found in candidate pool")
-        
-    all_candidates = list(candidates_db.values())
-    return audit_engine.audit_team(team, project, all_candidates, get_graph())
+    all_candidates = [parse_candidate(c) for c in db.query(DbCandidate).all()]
+    all_candidates_dict = {c.id: c for c in all_candidates}
+    
+    team = []
+    for c_id in request.team_ids:
+        if c_id not in all_candidates_dict:
+            raise HTTPException(status_code=400, detail=f"Team member {c_id} not found in pool")
+        team.append(all_candidates_dict[c_id])
+    
+    graph = ig.build_inhibition_graph(all_candidates)
+    return audit_engine.audit_team(team, project, all_candidates, graph)

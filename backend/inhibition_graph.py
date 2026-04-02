@@ -3,26 +3,27 @@ from typing import List, Tuple
 from models import CandidateProfile
 
 def build_inhibition_graph(candidates: List[CandidateProfile]) -> nx.Graph:
-    """Build an undirected graph of known negative pairings"""
     G = nx.Graph()
     for c in candidates:
         G.add_node(c.id)
         
     for c in candidates:
-        for blocked_id in c.inhibition_pairs:
-            # Only add if the node exists (to maintain safety)
-            if G.has_node(blocked_id):
-                G.add_edge(c.id, blocked_id, weight=1.0)
+        for pair in c.inhibition_pairs:
+            if G.has_node(pair.id):
+                G.add_edge(c.id, pair.id, weight=pair.severity)
                 
     return G
 
-def get_inhibition_pairs(team: List[CandidateProfile], graph: nx.Graph) -> List[Tuple[str, str]]:
-    """Return all edges (inhibition pairs) present within the team subset"""
+def get_inhibition_pairs(team: List[CandidateProfile], graph: nx.Graph) -> List[Tuple[str, str, float]]:
     team_ids = [c.id for c in team]
-    # We create a subgraph of the team members
     subgraph = graph.subgraph(team_ids)
-    return list(subgraph.edges())
+    
+    pairs_with_weights = []
+    for u, v, data in subgraph.edges(data=True):
+        pairs_with_weights.append((u, v, data.get('weight', 1.0)))
+        
+    return pairs_with_weights
 
-def get_drag_coefficient(pairs: List[Tuple[str, str]]) -> float:
-    """Return total yield drag from all inhibitions in the team"""
-    return 0.08 * len(pairs)
+def get_drag_coefficient(pairs: List[Tuple[str, str, float]]) -> float:
+    if not pairs: return 0.0
+    return 0.08 * sum(p[2] for p in pairs)
