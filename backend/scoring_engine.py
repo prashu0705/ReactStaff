@@ -119,6 +119,24 @@ def score_team(team: List[CandidateProfile], project: ProjectProfile, inhibition
                 "deterministic_path": f"Mandatory cross-functional mediation to resolve bottlenecked yield dynamics between these specific nodes."
             })
     
+    team_cost = sum(c.salary for c in team) if team else 0.0
+    
+    hiring_blueprint = None
+    if R < 1.0:
+        temp_roles = [c.role_type for c in team]
+        missing = []
+        for req in project.required_roles:
+            if req in temp_roles: temp_roles.remove(req)
+            else: missing.append(req)
+            
+        if missing:
+            hiring_blueprint = {
+                "missing_role": missing[0].upper(),
+                "target_ea": f"< {bottleneck.activation_energy if bottleneck else 3.0}",
+                "target_stability": "> 0.85",
+                "avoid_friction_with": ", ".join([c.name for c in team[:2]]) if team else "None"
+            }
+            
     explanations = {}
     
     return TeamCompositionResult(
@@ -130,5 +148,7 @@ def score_team(team: List[CandidateProfile], project: ProjectProfile, inhibition
         explanation=explanations,
         math_receipt=receipt,
         audit_trail=audit_trail,
-        career_pathways=career_pathways
+        career_pathways=career_pathways,
+        team_cost=team_cost,
+        hiring_blueprint=hiring_blueprint
     )

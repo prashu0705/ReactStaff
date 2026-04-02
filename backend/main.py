@@ -34,14 +34,15 @@ def parse_candidate(db_c: DbCandidate) -> CandidateProfile:
         id=db_c.id, name=db_c.name, role_type=db_c.role_type,
         activation_energy=db_c.activation_energy, catalytic_rating=db_c.catalytic_rating,
         role_valency=db_c.role_valency, thermal_stability=db_c.thermal_stability,
-        inhibition_pairs=pairs
+        salary=db_c.salary, inhibition_pairs=pairs
     )
 
 def parse_project(db_p: DbProject) -> ProjectProfile:
     return ProjectProfile(
         id=db_p.id, name=db_p.name, temperature=db_p.temperature,
         yield_requirement=db_p.yield_requirement, reaction_type=db_p.reaction_type,
-        required_roles=db_p.required_roles or [], team_size=db_p.team_size
+        required_roles=db_p.required_roles or [], team_size=db_p.team_size,
+        budget_max=db_p.budget_max
     )
 
 @app.on_event("startup")
@@ -63,7 +64,7 @@ def add_candidate(candidate: CandidateProfile, db: Session = Depends(get_db)):
         id=candidate.id, name=candidate.name, role_type=candidate.role_type,
         activation_energy=candidate.activation_energy, catalytic_rating=candidate.catalytic_rating,
         role_valency=candidate.role_valency, thermal_stability=candidate.thermal_stability,
-        inhibition_pairs=[p.dict() for p in candidate.inhibition_pairs]
+        salary=candidate.salary, inhibition_pairs=[p.dict() for p in candidate.inhibition_pairs]
     )
     db.add(db_c)
     db.commit()
@@ -87,7 +88,8 @@ def add_project(project: ProjectProfile, db: Session = Depends(get_db)):
     db_p = DbProject(
         id=project.id, name=project.name, temperature=project.temperature,
         yield_requirement=project.yield_requirement, reaction_type=project.reaction_type,
-        required_roles=project.required_roles, team_size=project.team_size
+        required_roles=project.required_roles, team_size=project.team_size,
+        budget_max=project.budget_max
     )
     db.add(db_p)
     db.commit()

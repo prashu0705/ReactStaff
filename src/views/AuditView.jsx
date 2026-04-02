@@ -166,6 +166,26 @@ export default function AuditView() {
                   <div className="text-sm">Recommended Swap: Remove {report.swap_recommendation.remove} , Add {report.swap_recommendation.add}. Score improvement: +{(report.swap_recommendation.score_delta ?? report.swap_recommendation.delta).toFixed(3)}. Reason: {report.swap_recommendation.reason}</div>
                 </div>
               )}
+              
+              {/* Bus Factor Risk */}
+              {report.bus_factor_risk && (
+                <div className="p-4 bg-purple-50 border-l-4 border-purple-600 rounded mt-4">
+                  <div className="font-bold text-purple-900 flex items-center gap-2">
+                    <span>🚌</span> Critical Dependency Risk (Bus Factor)
+                  </div>
+                  <div className="text-sm text-purple-800 mt-1">{report.bus_factor_risk.warning}</div>
+                </div>
+              )}
+              
+              {/* Burnout Risk */}
+              {report.burnout_risk && (
+                <div className="p-4 bg-[url('https://www.transparenttextures.com/patterns/dark-matter.png')] bg-red-900 border border-red-700 rounded mt-4 text-white shadow-inner">
+                  <div className="font-bold text-red-100 flex items-center gap-2">
+                    <span>🔥</span> Thermal Burnout Predictor
+                  </div>
+                  <div className="text-sm text-red-200 mt-1 font-medium tracking-wide">{report.burnout_risk.warning}</div>
+                </div>
+              )}
             </div>
           )}
         </div>

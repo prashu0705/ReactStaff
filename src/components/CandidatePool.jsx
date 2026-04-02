@@ -35,6 +35,7 @@ export default function CandidatePool() {
     catalytic_rating: 5,
     thermal_stability: 5,
     role_valency: 3,
+    salary: 100000,
     inhibition_pairs: ''
   })
 
@@ -78,6 +79,7 @@ export default function CandidatePool() {
       catalytic_rating: Number(form.catalytic_rating),
       thermal_stability: Number(form.thermal_stability),
       role_valency: Number(form.role_valency),
+      salary: Number(form.salary),
       inhibition_pairs: form.inhibition_pairs
         ? form.inhibition_pairs.split(',').map(s => s.trim()).filter(Boolean).map(id => ({ id, severity: 1.0 }))
         : []
@@ -86,7 +88,7 @@ export default function CandidatePool() {
     try {
       await addCandidate(payload)
       setShowModal(false)
-      setForm({ name: '', role_type: '', activation_energy: 5, catalytic_rating: 5, thermal_stability: 5, role_valency: 3, inhibition_pairs: '' })
+      setForm({ name: '', role_type: '', activation_energy: 5, catalytic_rating: 5, thermal_stability: 5, role_valency: 3, salary: 100000, inhibition_pairs: '' })
       await load()
     } catch (err) {
       alert('Error adding candidate: ' + (err.message || err))
@@ -137,7 +139,7 @@ export default function CandidatePool() {
                     <div className="text-xs text-yellow-800 bg-yellow-100 px-2 py-0.5 rounded">⚠ Inhibitions</div>
                   )}
                 </div>
-                <div className="text-xs text-gray-500">ID: {c.id || '—'}</div>
+                <div className="text-xs text-gray-500">ID: {c.id || '—'} | Base Salary: ${c.salary ? c.salary.toLocaleString() : '0'}</div>
               </div>
             </div>
 
@@ -184,6 +186,10 @@ export default function CandidatePool() {
                 <div>
                   <label className="block text-sm">Role Valency (0-10)</label>
                   <input type="number" min="0" max="10" step="1" className="w-full border px-2 py-1 rounded" value={form.role_valency} onChange={e => setForm({ ...form, role_valency: e.target.value })} />
+                </div>
+                <div className="col-span-2">
+                  <label className="block text-sm">Base Salary ($)</label>
+                  <input type="number" min="0" step="1000" className="w-full border px-2 py-1 rounded" value={form.salary} onChange={e => setForm({ ...form, salary: e.target.value })} />
                 </div>
               </div>
 

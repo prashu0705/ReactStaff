@@ -114,6 +114,40 @@ function CareerPathways({ pathways }) {
   );
 }
 
+function HiringBlueprint({ bp }) {
+  if (!bp) return null;
+  return (
+    <div className="mt-4 bg-indigo-50 border border-indigo-200 rounded-lg p-4 shadow-sm">
+      <div className="flex items-center gap-2 mb-3">
+        <span className="text-indigo-700 font-bold text-sm tracking-wide uppercase flex items-center gap-2">
+          <span>🔍</span> Reverse-Engineered Hiring Blueprint
+        </span>
+      </div>
+      <div className="bg-white p-3 rounded shadow-sm border border-indigo-100 space-y-2">
+        <div className="text-sm font-medium text-indigo-900 border-b pb-2 mb-2">Team capacity capped. Optimal replacement hire required:</div>
+        <div className="grid grid-cols-2 gap-2 text-sm">
+          <div className="bg-gray-50 p-2 rounded border border-gray-100">
+             <span className="text-gray-500 text-xs block">Target Role</span>
+             <span className="font-bold">{bp.missing_role}</span>
+          </div>
+          <div className="bg-gray-50 p-2 rounded border border-gray-100">
+             <span className="text-gray-500 text-xs block">Max Activation Energy</span>
+             <span className="font-bold text-red-600">{bp.target_ea}</span>
+          </div>
+          <div className="bg-gray-50 p-2 rounded border border-gray-100">
+             <span className="text-gray-500 text-xs block">Min Thermal Stability</span>
+             <span className="font-bold text-green-600">{bp.target_stability}</span>
+          </div>
+          <div className="bg-gray-50 p-2 rounded border border-gray-100">
+             <span className="text-gray-500 text-xs block">Crucial: Avoid Friction With</span>
+             <span className="font-bold text-red-600">{bp.avoid_friction_with}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function ComposeView() {
   const [selectedProjectId, setSelectedProjectId] = useState(null)
   const [running, setRunning] = useState(false)
@@ -194,7 +228,11 @@ export default function ComposeView() {
                     <div className="flex items-start justify-between">
                       <div>
                         <div className="text-lg font-semibold">{medals[i] || `Option ${i+1}`}</div>
-                        <div className="text-sm text-gray-500">Composite Score: <span className="font-bold text-2xl">{r.composite_score ?? r.score ?? '—'}</span></div>
+                        <div className="text-[11px] text-gray-500 uppercase tracking-widest mt-1">Composite Match</div>
+                        <div className="text-3xl font-black text-[#1A56A0] leading-none mb-2">{r.composite_score ? r.composite_score.toFixed(3) : '—'}</div>
+                        <div className="inline-block px-3 py-1 bg-green-50 text-green-800 font-medium rounded-full text-sm border border-green-200">
+                          Total Burn: <span className="font-bold">${r.team_cost ? r.team_cost.toLocaleString() : '0'}</span>
+                        </div>
                       </div>
 
                       <div className="space-y-2 w-1/3">
@@ -215,6 +253,7 @@ export default function ComposeView() {
                       </ul>
                       
                       <CareerPathways pathways={r.career_pathways} />
+                      <HiringBlueprint bp={r.hiring_blueprint} />
                       <AuditMatrix trail={r.audit_trail} />
                       
                       {r.math_receipt && (

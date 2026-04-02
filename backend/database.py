@@ -20,6 +20,7 @@ class DbCandidate(Base):
     catalytic_rating = Column(Float)
     role_valency = Column(Integer)
     thermal_stability = Column(Float)
+    salary = Column(Float, default=0.0)
     inhibition_pairs = Column(JSON) # List of dicts
 
 class DbProject(Base):
@@ -32,5 +33,6 @@ class DbProject(Base):
     reaction_type = Column(String)
     required_roles = Column(JSON)
     team_size = Column(Integer)
+    budget_max = Column(Float, default=0.0)
 
 Base.metadata.create_all(bind=engine)

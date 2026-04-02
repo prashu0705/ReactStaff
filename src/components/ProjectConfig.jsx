@@ -25,7 +25,7 @@ export default function ProjectConfig({ selectedProjectId, onSelectProject }) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [showModal, setShowModal] = useState(false)
-  const [form, setForm] = useState({ name: '', temperature: 5, yield_requirement: 80, reaction_type: 'Parallel' })
+  const [form, setForm] = useState({ name: '', temperature: 5, yield_requirement: 80, reaction_type: 'Parallel', budget_max: 500000 })
   const modalRef = useRef(null)
 
   useEffect(() => {
@@ -62,7 +62,8 @@ export default function ProjectConfig({ selectedProjectId, onSelectProject }) {
       yield_requirement: Number(form.yield_requirement) / 100, // Map 0-100 UI to 0-1 schema
       reaction_type: form.reaction_type,
       required_roles: ["engineer", "designer"], // Defaults because they exist in backend schema
-      team_size: 4
+      team_size: 4,
+      budget_max: Number(form.budget_max)
     }
 
     try {
@@ -103,6 +104,10 @@ export default function ProjectConfig({ selectedProjectId, onSelectProject }) {
                 <div className="flex items-center gap-1">
                   <span role="img" aria-label="thermometer">🌡️</span>
                   <div>{p.temperature ?? '-'}</div>
+                </div>
+                <div className="flex items-center gap-1">
+                  <span role="img" aria-label="money">💰</span>
+                  <div>${p.budget_max ? (p.budget_max / 1000).toFixed(0) + 'k' : '0'}</div>
                 </div>
 
                 <div className="flex-1">
@@ -147,6 +152,11 @@ export default function ProjectConfig({ selectedProjectId, onSelectProject }) {
                   <option>Chain</option>
                   <option>Catalytic Cycle</option>
                 </select>
+              </div>
+
+              <div>
+                <label className="block text-sm">Budget Max ($)</label>
+                <input type="number" min="0" step="10000" className="w-full border px-2 py-1 rounded" value={form.budget_max} onChange={e => setForm({ ...form, budget_max: e.target.value })} />
               </div>
 
               <div className="flex justify-end gap-2">

@@ -74,6 +74,32 @@ def audit_team(team: List[CandidateProfile], project: ProjectProfile, all_candid
                     "reason": reason
                 }
                 
+    bus_factor_risk = None
+    if team and current_efficiency > 0:
+        for member in team:
+            truncated = [c for c in team if c.id != member.id]
+            trunc_score = score_team(truncated, project, inhibition_graph).composite_score
+            drop_ratio = (current_efficiency - trunc_score) / current_efficiency
+            if drop_ratio > 0.40:
+                bus_factor_risk = {
+                    "critical_employee": member.name,
+                    "dependency_drop": float(drop_ratio),
+                    "warning": f"Single Point of Failure: Losing {member.name} drops team capacity by {drop_ratio*100:.1f}%. Cross-train their skills immediately."
+                }
+                break
+                
+    burnout_risk = None
+    if team and project.temperature > 5.0:
+        weakest_stability = min(team, key=lambda c: c.thermal_stability)
+        if weakest_stability.thermal_stability < 0.7:
+            pressure = project.temperature / 5.0
+            weeks = max(1.0, weakest_stability.thermal_stability * 10 / pressure)
+            burnout_risk = {
+                "high_risk_employee": weakest_stability.name,
+                "weeks_until_fracture": float(weeks),
+                "warning": f"Temperature pressure ({project.temperature}) exceeds structural tolerance. Predict network fracture in {weeks:.1f} weeks."
+            }
+
     return AuditReport(
         team=team,
         current_efficiency=current_efficiency,
@@ -82,5 +108,7 @@ def audit_team(team: List[CandidateProfile], project: ProjectProfile, all_candid
         bottleneck_person=bottleneck_person,
         inhibition_pairs_found=named_pairs,
         drag_coefficient=drag,
-        swap_recommendation=best_swap
+        swap_recommendation=best_swap,
+        bus_factor_risk=bus_factor_risk,
+        burnout_risk=burnout_risk
     )

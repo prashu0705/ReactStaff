@@ -13,6 +13,7 @@ class CandidateProfile(BaseModel):
     catalytic_rating: float
     role_valency: int
     thermal_stability: float
+    salary: float = 0.0
     inhibition_pairs: List[InhibitionPair]
     
     class Config:
@@ -26,6 +27,7 @@ class ProjectProfile(BaseModel):
     reaction_type: str
     required_roles: List[str]
     team_size: int
+    budget_max: float = 0.0
 
     class Config:
         orm_mode = True
@@ -38,8 +40,10 @@ class TeamCompositionResult(BaseModel):
     composite_score: float
     explanation: Dict[str, str]
     math_receipt: str
+    team_cost: float = 0.0
     audit_trail: List[Dict[str, Any]] = []
     career_pathways: List[Dict[str, str]] = []
+    hiring_blueprint: Optional[Dict[str, Any]] = None
 
 class AuditReport(BaseModel):
     team: List[CandidateProfile]
@@ -50,3 +54,5 @@ class AuditReport(BaseModel):
     inhibition_pairs_found: List[Tuple[str, str, float]]
     drag_coefficient: float
     swap_recommendation: Dict[str, Any]
+    bus_factor_risk: Optional[Dict[str, Any]] = None
+    burnout_risk: Optional[Dict[str, Any]] = None
