@@ -38,7 +38,7 @@ export function MLModal({ onClose }) {
 
   const runSimulation = () => {
     setLoading(true)
-    fetch('http://localhost:8000/ml_trace', {
+    fetch('/api/ml_trace', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ resume })

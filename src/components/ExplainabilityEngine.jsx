@@ -14,7 +14,7 @@ export default function ExplainabilityEngine() {
   useEffect(() => {
     let active = true
     setLoading(true)
-    fetch('http://localhost:8000/arrhenius_trace', {
+    fetch('/api/arrhenius_trace', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ea, t, a, r })
