@@ -6,7 +6,7 @@ export default function Layout({ active, setActive, onSignOut, children }) {
   const [showML, setShowML] = useState(false)
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-[#F5F7FA]">
+    <div className="flex h-screen w-screen overflow-hidden bg-[#0B0C10] text-[#C5C6C7]">
       <aside className="w-60 flex-shrink-0 bg-[#1A1A2E] text-white flex flex-col h-full">
         <div className="p-6 border-b border-white/6">
           <div className="flex items-center gap-3">
