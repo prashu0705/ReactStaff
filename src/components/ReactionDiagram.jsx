@@ -1,7 +1,8 @@
 import React from 'react'
 
-export default function ReactionDiagram({ team = [], project = null }) {
+export default function ReactionDiagram({ team = [], project = null, environmentalTemperature = null }) {
   const n = team.length
+  const currentTemp = environmentalTemperature !== null ? environmentalTemperature : (project?.temperature || 0)
   if (n === 0) return <div className="text-sm text-gray-500">No team members</div>
 
   const roleColors = {
@@ -63,8 +64,12 @@ export default function ReactionDiagram({ team = [], project = null }) {
             const isCatalyst = (m.id === catalystId)
             const isBottleneck = (m.id === bottleneckId)
 
+            const isUnstable = currentTemp > Number(m.thermal_stability || 10)
+            const isVeryUnstable = currentTemp > Number(m.thermal_stability || 10) * 1.5
+            const jitterClass = isVeryUnstable ? 'animate-jitter-fast' : (isUnstable ? 'animate-jitter' : '')
+
             return (
-              <g key={`node-${i}`}>
+              <g key={`node-${i}`} className={jitterClass} style={{ transformOrigin: `${cx}% ${cy}px` }}>
                 {/* glowing border for catalyst */}
                 {isCatalyst && (
                   <circle cx={`${cx}%`} cy={cy} r={r + 4} fill="none" stroke="#eab308" strokeOpacity={0.9} strokeWidth={3} />

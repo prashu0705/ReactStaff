@@ -56,6 +56,36 @@ export default function AuditView() {
 
   const selectedMembers = candidates.filter(c => selectedIds.includes(c.id))
 
+  function BurnoutTimeline({ weeksUntilFracture }) {
+    const weeks = Array.from({ length: 12 }, (_, i) => i + 1);
+    return (
+      <div className="mt-3 bg-red-950/50 p-4 rounded border border-red-800">
+        <div className="text-xs font-bold text-red-300 mb-2 uppercase tracking-wide">12-Week Prognosis Timeline</div>
+        <div className="flex w-full gap-1">
+          {weeks.map(w => {
+            const isFractured = w >= weeksUntilFracture;
+            // Gradual transition before fracture
+            const isWarning = w >= weeksUntilFracture - 2 && !isFractured;
+            let colorClass = 'bg-green-500';
+            if (isFractured) colorClass = 'bg-red-600 animate-pulse';
+            else if (isWarning) colorClass = 'bg-yellow-500';
+            
+            return (
+              <div key={w} className="flex-1 flex flex-col items-center">
+                <div className={`w-full h-8 rounded-sm ${colorClass}`}></div>
+                <div className="text-[10px] text-red-200 mt-1 font-mono">W{w}</div>
+              </div>
+            )
+          })}
+        </div>
+        <div className="mt-2 text-xs text-red-200 opacity-80 flex justify-between">
+          <span>Optimal State</span>
+          <span>Structural Failure at Week {Math.floor(weeksUntilFracture)}</span>
+        </div>
+      </div>
+    )
+  }
+
   // helper to render efficiency meter
   function EfficiencyMeter({ current, theoretical }) {
     const cur = Number(current || 0)
@@ -184,6 +214,7 @@ export default function AuditView() {
                     <span>🔥</span> Thermal Burnout Predictor
                   </div>
                   <div className="text-sm text-red-200 mt-1 font-medium tracking-wide">{report.burnout_risk.warning}</div>
+                  <BurnoutTimeline weeksUntilFracture={report.burnout_risk.weeks_until_fracture} />
                 </div>
               )}
             </div>

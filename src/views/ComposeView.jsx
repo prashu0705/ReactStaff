@@ -150,6 +150,7 @@ function HiringBlueprint({ bp }) {
 
 export default function ComposeView() {
   const [selectedProjectId, setSelectedProjectId] = useState(null)
+  const [volatility, setVolatility] = useState(5)
   const [running, setRunning] = useState(false)
   const [results, setResults] = useState(null)
   const [error, setError] = useState(null)
@@ -197,6 +198,25 @@ export default function ComposeView() {
         <div className="w-[35%] space-y-4">
           <CandidatePool />
           <ProjectConfig selectedProjectId={selectedProjectId} onSelectProject={setSelectedProjectId} />
+          
+          <div className="p-4 bg-white rounded shadow border border-red-200">
+            <div className="flex justify-between items-center mb-2">
+              <div className="font-bold text-sm flex items-center gap-2">
+                <span className="text-red-500">🔥</span> Volatility Injection
+              </div>
+              <div className="text-xs font-mono bg-red-100 text-red-700 px-2 rounded">
+                {volatility.toFixed(1)} T
+              </div>
+            </div>
+            <input 
+              type="range" min="1" max="20" step="0.5" 
+              value={volatility} onChange={e => setVolatility(Number(e.target.value))}
+              className="w-full accent-red-500"
+            />
+            <div className="text-[10px] text-gray-500 mt-2">
+              Increase temperature to stress-test team stability. Watch the core for fractures.
+            </div>
+          </div>
         </div>
 
         <div className="flex-1">
@@ -225,9 +245,21 @@ export default function ComposeView() {
               <div className="space-y-4">
                 {results.map((r, i) => (
                   <div key={i} className="p-4 border rounded">
+                    {/* Dynamic volatility adjustments */}
+                    {(() => {
+                      // Quick math to simulate stress testing:
+                      const tempStress = Math.max(0, volatility - (r.stability_score * 10));
+                      const dynamicYield = Math.max(0.1, r.yield_score - (tempStress * 0.05));
+                      const isFracturing = volatility > (r.stability_score * 10) * 1.2;
+
+                      return (
+                        <>
                     <div className="flex items-start justify-between">
                       <div>
-                        <div className="text-lg font-semibold">{medals[i] || `Option ${i+1}`}</div>
+                        <div className="text-lg font-semibold flex items-center gap-2">
+                          {medals[i] || `Option ${i+1}`} 
+                          {isFracturing && <span className="text-xs bg-red-600 text-white px-2 py-0.5 rounded animate-pulse">CORE FRACTURE</span>}
+                        </div>
                         <div className="text-[11px] text-gray-500 uppercase tracking-widest mt-1">Composite Match (Arrhenius)</div>
                         <div className="flex items-end gap-3 mb-2">
                           <div className="text-3xl font-black text-[#1A56A0] leading-none">{r.composite_score ? r.composite_score.toFixed(3) : '—'}</div>
@@ -243,15 +275,18 @@ export default function ComposeView() {
                       </div>
 
                       <div className="space-y-2 w-1/3">
-                        <ScoreGauge label="Reaction Rate" value={r.reaction_rate} percent={reactionPercents[i] ?? 50} />
-                        <ScoreGauge label="Yield" value={r.yield_score} percent={yieldPercents[i] ?? 50} />
+                        <ScoreGauge label="Reaction Rate" value={r.reaction_rate + (tempStress * 0.1)} percent={Math.min(100, Math.max(0, reactionPercents[i] + (tempStress * 2)))} />
+                        <ScoreGauge label="Dynamic Yield" value={dynamicYield} percent={Math.max(0, yieldPercents[i] - Math.round(tempStress * 5))} />
                         <ScoreGauge label="Stability" value={r.stability_score} percent={stabilityPercents[i] ?? 50} />
                       </div>
                     </div>
 
                     <div className="mt-3">
-                      <ReactionDiagram team={r.team || []} project={null} />
+                      <ReactionDiagram team={r.team || []} project={null} environmentalTemperature={volatility} />
                     </div>
+                    </>
+                    ) 
+                    })()}
 
                     <div className="mt-4">
                       <div className="font-semibold mb-2">Why This Team?</div>

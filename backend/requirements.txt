@@ -4,3 +4,4 @@ networkx
 numpy
 pydantic
 scikit-learn
+sqlalchemy
