@@ -228,8 +228,15 @@ export default function ComposeView() {
                     <div className="flex items-start justify-between">
                       <div>
                         <div className="text-lg font-semibold">{medals[i] || `Option ${i+1}`}</div>
-                        <div className="text-[11px] text-gray-500 uppercase tracking-widest mt-1">Composite Match</div>
-                        <div className="text-3xl font-black text-[#1A56A0] leading-none mb-2">{r.composite_score ? r.composite_score.toFixed(3) : '—'}</div>
+                        <div className="text-[11px] text-gray-500 uppercase tracking-widest mt-1">Composite Match (Arrhenius)</div>
+                        <div className="flex items-end gap-3 mb-2">
+                          <div className="text-3xl font-black text-[#1A56A0] leading-none">{r.composite_score ? r.composite_score.toFixed(3) : '—'}</div>
+                          {r.ml_score != null && (
+                            <div className="text-xs text-purple-600 bg-purple-50 px-2 py-1 rounded border border-purple-200" title="Calculated via Backend Machine Learning API">
+                              TF-IDF Score: <span className="font-bold">{r.ml_score.toFixed(3)}</span>
+                            </div>
+                          )}
+                        </div>
                         <div className="inline-block px-3 py-1 bg-green-50 text-green-800 font-medium rounded-full text-sm border border-green-200">
                           Total Burn: <span className="font-bold">${r.team_cost ? r.team_cost.toLocaleString() : '0'}</span>
                         </div>

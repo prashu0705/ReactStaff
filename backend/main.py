@@ -4,6 +4,7 @@ from pydantic import BaseModel
 from typing import List
 from sqlalchemy.orm import Session
 import hashlib
+import math
 
 from models import CandidateProfile, ProjectProfile, TeamCompositionResult, AuditReport, InhibitionPair
 from database import SessionLocal, DbCandidate, DbProject, DbUser
@@ -11,6 +12,7 @@ import inhibition_graph as ig
 import optimizer
 import audit_engine
 from seed_data import seed_db_if_empty
+import scoring_engine
 
 class LoginRequest(BaseModel):
     email: str
@@ -62,6 +64,17 @@ class ComposeRequest(BaseModel):
 class AuditRequest(BaseModel):
     project_id: str
     team_ids: List[str]
+
+class ArrheniusTraceRequest(BaseModel):
+    ea: float
+    t: float
+    a: float
+    r: float
+
+class ArrheniusTraceResponse(BaseModel):
+    exponent: float
+    raw_rate: float
+    final_rate: float
 
 @app.post("/login")
 def login(request: LoginRequest, db: Session = Depends(get_db)):
@@ -157,3 +170,32 @@ def audit(request: AuditRequest, db: Session = Depends(get_db)):
     
     graph = ig.build_inhibition_graph(all_candidates)
     return audit_engine.audit_team(team, project, all_candidates, graph)
+
+@app.post("/arrhenius_trace", response_model=ArrheniusTraceResponse)
+def arrhenius_trace(req: ArrheniusTraceRequest):
+    if req.r == 0 or req.t == 0:
+        exponent = 0.0
+        raw_rate = 0.0
+        final_rate = 0.0
+    else:
+        exponent = -(req.ea / (req.r * req.t))
+        raw_rate = req.a * math.exp(exponent)
+        final_rate = 1 / (1 + math.exp(-raw_rate))
+    
+    return ArrheniusTraceResponse(
+        exponent=exponent,
+        raw_rate=raw_rate,
+        final_rate=final_rate
+    )
+
+class MLSimulateRequest(BaseModel):
+    resume: str
+
+class MLSimulateResponse(BaseModel):
+    score: float
+    top_features: List[dict]
+
+@app.post("/ml_trace", response_model=MLSimulateResponse)
+def ml_trace(req: MLSimulateRequest):
+    return scoring_engine.simulate_ml(req.resume)
+

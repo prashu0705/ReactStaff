@@ -17,7 +17,7 @@ class CandidateProfile(BaseModel):
     inhibition_pairs: List[InhibitionPair]
     
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class ProjectProfile(BaseModel):
     id: str
@@ -30,7 +30,7 @@ class ProjectProfile(BaseModel):
     budget_max: float = 0.0
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class TeamCompositionResult(BaseModel):
     team: List[CandidateProfile]
@@ -44,13 +44,15 @@ class TeamCompositionResult(BaseModel):
     audit_trail: List[Dict[str, Any]] = []
     career_pathways: List[Dict[str, str]] = []
     hiring_blueprint: Optional[Dict[str, Any]] = None
+    ml_score: Optional[float] = None
+
 
 class AuditReport(BaseModel):
     team: List[CandidateProfile]
     current_efficiency: float
     theoretical_maximum: float
     efficiency_gap: float
-    bottleneck_person: str
+    bottleneck: Optional[CandidateProfile] = None
     inhibition_pairs_found: List[Tuple[str, str, float]]
     drag_coefficient: float
     swap_recommendation: Dict[str, Any]

@@ -19,8 +19,13 @@ export default function App() {
     return <LoginView onLogin={() => setIsAuthenticated(true)} />
   }
 
+  const handleSignOut = () => {
+    localStorage.removeItem('rs_token')
+    setIsAuthenticated(false)
+  }
+
   return (
-    <Layout active={active} setActive={setActive}>
+    <Layout active={active} setActive={setActive} onSignOut={handleSignOut}>
       {active === 'compose' ? <ComposeView /> : <AuditView />}
     </Layout>
   )

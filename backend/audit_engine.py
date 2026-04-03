@@ -13,9 +13,9 @@ def audit_team(team: List[CandidateProfile], project: ProjectProfile, all_candid
     
     efficiency_gap = theoretical_maximum - current_efficiency
     
-    bottleneck_person = ""
+    bottleneck = None
     if team:
-        bottleneck_person = max(team, key=lambda c: c.activation_energy).name
+        bottleneck = max(team, key=lambda c: c.activation_energy)
         
     pairs_found = ig.get_inhibition_pairs(team, inhibition_graph)
     
@@ -105,7 +105,7 @@ def audit_team(team: List[CandidateProfile], project: ProjectProfile, all_candid
         current_efficiency=current_efficiency,
         theoretical_maximum=theoretical_maximum,
         efficiency_gap=efficiency_gap,
-        bottleneck_person=bottleneck_person,
+        bottleneck=bottleneck,
         inhibition_pairs_found=named_pairs,
         drag_coefficient=drag,
         swap_recommendation=best_swap,

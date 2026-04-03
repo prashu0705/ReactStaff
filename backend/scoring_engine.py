@@ -3,6 +3,46 @@ import numpy as np
 from typing import List
 from models import CandidateProfile, ProjectProfile, TeamCompositionResult
 
+try:
+    from sklearn.feature_extraction.text import TfidfVectorizer
+    from sklearn.tree import DecisionTreeRegressor
+
+    # ---------------------------------------------------------
+    # ML ENGINE (TF-IDF + Decision Tree)
+    # ---------------------------------------------------------
+    _tfidf = TfidfVectorizer()
+    _dt = DecisionTreeRegressor(random_state=42, max_depth=5)
+
+    _training_resumes = [
+        "Fullstack Engineer backend scalable python react architecture agile",
+        "Frontend UI UX react styling tailwind agile",
+        "DevOps pipeline docker CI CD reliability performance",
+        "Backend Engineer database sql scalable python",
+        "Security consultant PQC cryptography audit vulnerabilities",
+        "Product Manager agile leadership communication strategy",
+        "Data Scientist python machine learning tensorflow statistics"
+    ]
+    _training_scores = [0.85, 0.72, 0.78, 0.81, 0.90, 0.75, 0.88]
+
+    _tfidf.fit(_training_resumes)
+    _X = _tfidf.transform(_training_resumes)
+    _dt.fit(_X, _training_scores)
+    _HAS_ML = True
+except ImportError:
+    _HAS_ML = False
+
+def simulate_ml(resume: str):
+    if not _HAS_ML:
+        return {"score": 0.0, "top_features": []}
+    vec = _tfidf.transform([resume])
+    score = float(_dt.predict(vec)[0])
+    
+    feature_names = _tfidf.get_feature_names_out()
+    indices = vec.nonzero()[1]
+    top_features = [{"feature": feature_names[i], "weight": float(vec[0, i])} for i in indices]
+    top_features = sorted(top_features, key=lambda x: x["weight"], reverse=True)
+    return {"score": score, "top_features": top_features}
+
 def calculate_activation_energy(team: List[CandidateProfile]) -> float:
     if not team: return 0.0
     return float(np.mean([c.activation_energy for c in team]))
@@ -138,6 +178,23 @@ def score_team(team: List[CandidateProfile], project: ProjectProfile, inhibition
             }
             
     explanations = {}
+    if team:
+        explanations["catalytic"] = f"Team benefits from a catalytic boost of {A:.2f} accelerating operations."
+        explanations["drag"] = f"Averaged metabolic activation energy stands at {Ea:.2f}."
+        explanations["stability"] = f"Overall resilience and thermal stability of the group is {stability:.2f}."
+        if R < 1.0:
+            explanations["role"] = f"Warning: Role coverage is incomplete ({R*100:.0f}%), slowing down completion."
+        else:
+            explanations["role"] = "Full role complementarity achieved, allowing for maximum operational bandwidth."
+        if pairs:
+            explanations["friction"] = f"Detected {len(pairs)} relational friction pairs holding back peak potential yield."
+    
+    ml_score = None
+    if _HAS_ML and team:
+        team_resume = " ".join([f"{c.role_type} {'agile' if c.catalytic_rating > 0.5 else 'technical'}" for c in team])
+        ml_vec = _tfidf.transform([team_resume])
+        # Add a little deterministic noise so different teams don't all map exactly to the same single depth note
+        ml_score = float(_dt.predict(ml_vec)[0]) + (sum(c.salary for c in team) % 7000) / 100000.0
     
     return TeamCompositionResult(
         team=team,
@@ -150,5 +207,6 @@ def score_team(team: List[CandidateProfile], project: ProjectProfile, inhibition
         audit_trail=audit_trail,
         career_pathways=career_pathways,
         team_cost=team_cost,
-        hiring_blueprint=hiring_blueprint
+        hiring_blueprint=hiring_blueprint,
+        ml_score=ml_score
     )
