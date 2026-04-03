@@ -1,4 +1,4 @@
-const BASE = 'http://localhost:8000'
+const BASE = '/api'
 
 async function request(path, options = {}) {
   const url = `${BASE}${path}`

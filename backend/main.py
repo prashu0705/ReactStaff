@@ -1,4 +1,7 @@
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import FastAPI, HTTPException, Depends, APIRouter
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+import os
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List
@@ -52,6 +55,8 @@ def parse_project(db_p: DbProject) -> ProjectProfile:
         budget_max=db_p.budget_max
     )
 
+api_router = APIRouter(prefix="/api")
+
 @app.on_event("startup")
 def startup_event():
     db = SessionLocal()
@@ -76,7 +81,7 @@ class ArrheniusTraceResponse(BaseModel):
     raw_rate: float
     final_rate: float
 
-@app.post("/login")
+@api_router.post("/login")
 def login(request: LoginRequest, db: Session = Depends(get_db)):
     db_user = db.query(DbUser).filter(DbUser.email == request.email).first()
     if not db_user:
@@ -88,7 +93,7 @@ def login(request: LoginRequest, db: Session = Depends(get_db)):
         
     return {"token": "simulated_token_xyz_reactstaff", "email": db_user.email}
 
-@app.post("/register")
+@api_router.post("/register")
 def register(request: LoginRequest, db: Session = Depends(get_db)):
     db_user = db.query(DbUser).filter(DbUser.email == request.email).first()
     if db_user:
@@ -101,7 +106,7 @@ def register(request: LoginRequest, db: Session = Depends(get_db)):
     
     return {"token": "simulated_token_xyz_reactstaff", "email": new_user.email}
 
-@app.post("/candidates", response_model=CandidateProfile)
+@api_router.post("/candidates", response_model=CandidateProfile)
 def add_candidate(candidate: CandidateProfile, db: Session = Depends(get_db)):
     db_c = DbCandidate(
         id=candidate.id, name=candidate.name, role_type=candidate.role_type,
@@ -113,11 +118,11 @@ def add_candidate(candidate: CandidateProfile, db: Session = Depends(get_db)):
     db.commit()
     return candidate
 
-@app.get("/candidates", response_model=List[CandidateProfile])
+@api_router.get("/candidates", response_model=List[CandidateProfile])
 def get_candidates(db: Session = Depends(get_db)):
     return [parse_candidate(c) for c in db.query(DbCandidate).all()]
 
-@app.delete("/candidates/{c_id}")
+@api_router.delete("/candidates/{c_id}")
 def delete_candidate(c_id: str, db: Session = Depends(get_db)):
     db_c = db.query(DbCandidate).filter(DbCandidate.id == c_id).first()
     if db_c:
@@ -126,7 +131,7 @@ def delete_candidate(c_id: str, db: Session = Depends(get_db)):
         return {"status": "deleted"}
     raise HTTPException(status_code=404, detail="Candidate not found")
 
-@app.post("/projects", response_model=ProjectProfile)
+@api_router.post("/projects", response_model=ProjectProfile)
 def add_project(project: ProjectProfile, db: Session = Depends(get_db)):
     db_p = DbProject(
         id=project.id, name=project.name, temperature=project.temperature,
@@ -138,11 +143,11 @@ def add_project(project: ProjectProfile, db: Session = Depends(get_db)):
     db.commit()
     return project
 
-@app.get("/projects", response_model=List[ProjectProfile])
+@api_router.get("/projects", response_model=List[ProjectProfile])
 def get_projects(db: Session = Depends(get_db)):
     return [parse_project(p) for p in db.query(DbProject).all()]
 
-@app.post("/compose", response_model=List[TeamCompositionResult])
+@api_router.post("/compose", response_model=List[TeamCompositionResult])
 def compose_team(request: ComposeRequest, db: Session = Depends(get_db)):
     db_p = db.query(DbProject).filter(DbProject.id == request.project_id).first()
     if not db_p: raise HTTPException(status_code=404, detail="Project not found")
@@ -153,7 +158,7 @@ def compose_team(request: ComposeRequest, db: Session = Depends(get_db)):
     
     return optimizer.find_top_teams(all_candidates, project, graph, top_n=3)
 
-@app.post("/audit", response_model=AuditReport)
+@api_router.post("/audit", response_model=AuditReport)
 def audit(request: AuditRequest, db: Session = Depends(get_db)):
     db_p = db.query(DbProject).filter(DbProject.id == request.project_id).first()
     if not db_p: raise HTTPException(status_code=404, detail="Project not found")
@@ -171,7 +176,7 @@ def audit(request: AuditRequest, db: Session = Depends(get_db)):
     graph = ig.build_inhibition_graph(all_candidates)
     return audit_engine.audit_team(team, project, all_candidates, graph)
 
-@app.post("/arrhenius_trace", response_model=ArrheniusTraceResponse)
+@api_router.post("/arrhenius_trace", response_model=ArrheniusTraceResponse)
 def arrhenius_trace(req: ArrheniusTraceRequest):
     if req.r == 0 or req.t == 0:
         exponent = 0.0
@@ -195,7 +200,23 @@ class MLSimulateResponse(BaseModel):
     score: float
     top_features: List[dict]
 
-@app.post("/ml_trace", response_model=MLSimulateResponse)
+@api_router.post("/ml_trace", response_model=MLSimulateResponse)
 def ml_trace(req: MLSimulateRequest):
     return scoring_engine.simulate_ml(req.resume)
 
+
+
+app.include_router(api_router)
+
+# Serve React App from dist
+@app.exception_handler(404)
+async def custom_404_handler(request, __):
+    dist_path = os.path.join(os.path.dirname(__file__), "..", "dist")
+    index_path = os.path.join(dist_path, "index.html")
+    if os.path.exists(index_path):
+        return FileResponse(index_path)
+    return HTTPException(status_code=404, detail="Not Found and no dist folder")
+
+dist_dir = os.path.join(os.path.dirname(__file__), "..", "dist")
+if os.path.exists(dist_dir):
+    app.mount("/", StaticFiles(directory=dist_dir, html=True), name="static")
