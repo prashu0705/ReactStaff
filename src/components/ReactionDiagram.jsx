@@ -38,7 +38,7 @@ export default function ReactionDiagram({ team = [], project = null }) {
   return (
     <div className="w-full">
       <div className="relative" style={{ height: 120 }}>
-        <svg width="100%" height="120" viewBox={`0 0 100 ${120}`} preserveAspectRatio="none" className="absolute left-0 top-0">
+        <svg width="100%" height="120" className="absolute left-0 top-0">
           {/* lines between adjacent nodes */}
           {team.map((t, i) => {
             if (i === 0) return null
@@ -46,19 +46,18 @@ export default function ReactionDiagram({ team = [], project = null }) {
             const x2 = positions[i]
             const inhibited = isInhibited(team[i - 1], team[i])
             return (
-              <line key={`line-${i}`} x1={`${x1}`} y1={50} x2={`${x2}`} y2={50}
+              <line key={`line-${i}`} x1={`${x1}%`} y1={60} x2={`${x2}%`} y2={60}
                 stroke={inhibited ? '#ef4444' : '#9ca3af'}
-                strokeWidth={inhibited ? 2.5 : 1.5}
-                strokeDasharray={inhibited ? '4 4' : '0'}
-                vectorEffect="non-scaling-stroke" />
+                strokeWidth={inhibited ? 3 : 2}
+                strokeDasharray={inhibited ? '6 6' : '0'} />
             )
           })}
 
           {/* circles */}
           {team.map((m, i) => {
             const cx = positions[i]
-            const cy = 50
-            const r = 7.2 // scaled because viewBox width 100 -> radius 36px approximated
+            const cy = 60
+            const r = 24 
             const role = (m.role_type || '').toLowerCase()
             const fill = roleColors[role] || roleColors.default
             const isCatalyst = (m.id === catalystId)
@@ -68,16 +67,16 @@ export default function ReactionDiagram({ team = [], project = null }) {
               <g key={`node-${i}`}>
                 {/* glowing border for catalyst */}
                 {isCatalyst && (
-                  <circle cx={`${cx}%`} cy={cy} r={r + 1.2} fill="none" stroke="#eab308" strokeOpacity={0.9} strokeWidth={0.8} />
+                  <circle cx={`${cx}%`} cy={cy} r={r + 4} fill="none" stroke="#eab308" strokeOpacity={0.9} strokeWidth={3} />
                 )}
 
                 <circle cx={`${cx}%`} cy={cy} r={r} fill={fill} />
                 {/* initials */}
-                <text x={`${cx}%`} y={cy + 0.6} fontSize="3" fill="#fff" textAnchor="middle" dominantBaseline="middle" style={{ fontWeight: 700 }}>{(m.name || '').split(' ').map(s => s[0]).slice(0,2).join('')}</text>
+                <text x={`${cx}%`} y={cy + 1} fontSize="16" fill="#fff" textAnchor="middle" dominantBaseline="middle" style={{ fontWeight: 700 }}>{(m.name || '').split(' ').map(s => s[0]).slice(0,2).join('')}</text>
 
                 {/* bottleneck badge */}
                 {isBottleneck && (
-                  <text x={`${cx + (r + 2)}%`} y={cy - (r + 2)} fontSize="3" fill="#ef4444" textAnchor="start">⚡</text>
+                  <text x={`${cx}%`} dx={r + 4} y={cy - r} fontSize="18" fill="#ef4444" textAnchor="start">⚡</text>
                 )}
               </g>
             )
