@@ -3,7 +3,8 @@ import React from 'react'
 export default function Layout({ active, setActive, children }) {
   return (
     <div className="flex">
-      <aside className="fixed left-0 top-0 h-screen w-60 bg-[#1A1A2E] text-white flex flex-col">
+      {/* keep the sidebar in flow with `sticky` so main doesn't get pushed past the viewport */}
+      <aside className="sticky top-0 h-screen w-60 bg-[#1A1A2E] text-white flex flex-col">
         <div className="p-6 border-b border-white/6">
           <div className="flex items-center gap-3">
             <div className="text-2xl">⚗️</div>
@@ -37,8 +38,10 @@ export default function Layout({ active, setActive, children }) {
           © ReactStaff
         </div>
       </aside>
-      <main className="ml-60 flex-1 min-h-screen bg-[#F5F7FA] p-8">
-        <div className="max-w-6xl mx-auto min-w-[1280px]">
+      {/* remove left margin — the sidebar is in flow now and will not cause overflow */}
+      <main className="flex-1 min-h-screen bg-[#F5F7FA] p-8">
+        {/* allow the inner container to shrink and avoid forcing horizontal scroll */}
+        <div className="max-w-6xl mx-auto min-w-0">
           {/* Top header bar inside content area */}
           <div className="mb-6">
             <div className="bg-white/80 backdrop-blur-sm rounded p-3 shadow-sm">
