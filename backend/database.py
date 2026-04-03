@@ -35,4 +35,10 @@ class DbProject(Base):
     team_size = Column(Integer)
     budget_max = Column(Float, default=0.0)
 
+class DbUser(Base):
+    __tablename__ = "users"
+    
+    email = Column(String, primary_key=True, index=True)
+    password_hash = Column(String)
+
 Base.metadata.create_all(bind=engine)

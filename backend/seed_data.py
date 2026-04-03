@@ -1,5 +1,6 @@
 from models import CandidateProfile, ProjectProfile, InhibitionPair
-from database import DbCandidate, DbProject
+from database import DbCandidate, DbProject, DbUser
+import hashlib
 
 def get_seed_candidates():
     # 4 engineers, 2 designers, 2 PMs, 2 analysts, 2 QA.
@@ -39,4 +40,11 @@ def seed_db_if_empty(db_session):
                 reaction_type=p.reaction_type, required_roles=p.required_roles, team_size=p.team_size, budget_max=p.budget_max
             )
             db_session.add(db_p)
-        db_session.commit()
+            
+    # Seed default user independently
+    if db_session.query(DbUser).count() == 0:
+        pw_hash = hashlib.sha256("password123".encode()).hexdigest()
+        db_user = DbUser(email="chemist@reactstaff.io", password_hash=pw_hash)
+        db_session.add(db_user)
+        
+    db_session.commit()

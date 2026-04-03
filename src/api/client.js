@@ -40,6 +40,14 @@ export async function getCandidates() {
   return request('/candidates')
 }
 
+export async function login(email, password) {
+  return request('/login', { method: 'POST', ...jsonOptions({ email, password }) })
+}
+
+export async function register(email, password) {
+  return request('/register', { method: 'POST', ...jsonOptions({ email, password }) })
+}
+
 export async function addCandidate(profile) {
   return request('/candidates', { method: 'POST', ...jsonOptions(profile) })
 }
